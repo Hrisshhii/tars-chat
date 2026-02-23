@@ -41,6 +41,7 @@ export const createOrUpdateUser = mutation({
   },
 });
 
+// return all users for sidebar list
 export const getUsers = query({
   args: {},
   handler: async (ctx) => {

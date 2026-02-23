@@ -1,6 +1,7 @@
 import {mutation,query} from "./_generated/server";
 import {v} from "convex/values";
 
+// creates one on one convos or returns existing one
 export const createOrUpdateConversation=mutation({
   args:{
     user1:v.id("users"),

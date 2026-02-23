@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // users table synced from clerk auth
   users: defineTable({
     clerkId: v.string(),
     name: v.string(),
@@ -11,6 +12,7 @@ export default defineSchema({
     lastSeen: v.number(),
   }).index("by_clerkId", ["clerkId"]),
 
+  // stores convo metadata
   conversations: defineTable({
     participants: v.array(v.id("users")),
     isGroup: v.boolean(),
@@ -18,6 +20,7 @@ export default defineSchema({
     lastMessageId: v.optional(v.id("messages")),
   }),
 
+  //stores actual messages
   messages: defineTable({
     conversationId: v.id("conversations"),
     senderId: v.id("users"),

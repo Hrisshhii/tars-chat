@@ -14,13 +14,12 @@ export default function Home() {
   const users = useQuery(api.users.getUsers);
   const createConvo = useMutation(api.conversations.createOrUpdateConversation);
 
-  const [search, setSearch] = useState("");
-  const [selectedConversation, setSelectedConversation] =
-    useState<string | null>(null);
+  const [search,setSearch]=useState("");
+  const [selectedConversation,setSelectedConversation]=useState<string | null>(null);
 
+  // sync clerk user into convex database
   useEffect(()=>{
     if (!user) return;
-
     createUser({
       clerkId: user.id,
       name: user.fullName || "Unknown",
@@ -31,6 +30,7 @@ export default function Home() {
 
   if (!user || !users) return <div>Loading...</div>;
 
+  // handles convo creation when clicked on user
   const handleSelectUser=async (otherUserId: Id<"users">)=>{
     const currentUser=users.find((u)=>u.clerkId===user.id);
     if (!currentUser) return;
