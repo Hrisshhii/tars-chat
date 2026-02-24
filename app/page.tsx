@@ -23,6 +23,7 @@ export default function Home() {
       email: user.primaryEmailAddress?.emailAddress || "",
       imageUrl: user.imageUrl,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[user]);
 
   if (users === undefined) {
