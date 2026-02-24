@@ -3,24 +3,35 @@
 
 import { UserButton } from "@clerk/nextjs";
 import { Id } from "@/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useEffect } from "react";
+
 interface SidebarProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  users: any[];
-  currentUserId: string;
-  search: string;
-  setSearch: (value: string) => void;
-  onSelectUser: (userId: Id<"users">) => void;
+  currentUserConvexId: Id<"users">;
+  selectedConversation: Id<"conversations"> | null;
+  onSelectConversation: (id: Id<"conversations">) => void;
 }
 
 export function Sidebar({
-  users,
-  currentUserId,
-  search,
-  setSearch,
-  onSelectUser,
+  currentUserConvexId,
+  selectedConversation,
+  onSelectConversation,
 }: SidebarProps) {
-  const filteredUsers = users?.filter((u) => u.clerkId !== currentUserId)?.filter((u)=>u.name.toLowerCase().includes(search.toLowerCase())
-    );
+  const conversations=useQuery(api.conversations.getUserConversations,{userId:currentUserConvexId});
+  const unreadCounts=useQuery(api.messages.getUnreadCounts,{userId:currentUserConvexId,})
+  const users=useQuery(api.users.getUsers);
+  const clearUnread=useMutation(api.messages.clearUnread);
+
+  useEffect(()=>{
+    if(!selectedConversation) return;
+    clearUnread({
+      conversationId:selectedConversation,
+      userId:currentUserConvexId,
+    });
+  },[selectedConversation]);
+
+  if(!conversations) return <div>Loading...</div>;
 
   return (
     <div className="w-full md:w-1/3 border-r p-4 space-y-4">
@@ -29,38 +40,38 @@ export function Sidebar({
         <UserButton />
       </div>
 
-      <input
-        type="text"
-        placeholder="Search users..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full p-2 border rounded"
-      />
-
       <div className="space-y-2">
-        {filteredUsers?.length === 0 && (
+        {conversations.length===0 && (
           <p className="text-gray-500 text-sm">
-            No users found.
+            No conversations yet.
           </p>
         )}
 
-        {filteredUsers?.map((u) => (
-          <div
-            key={u._id}
-            onClick={() => onSelectUser(u._id)}
-            className="p-3 border rounded flex items-center gap-3 cursor-pointer hover:bg-gray-100"
-          >
-            <img src={u.imageUrl} alt={u.name}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-            <div>
-              <p className="font-medium">{u.name}</p>
-              <p className="text-sm text-gray-500">
-                {u.email}
-              </p>
+        {conversations.map((conversation)=>{
+          const unread=unreadCounts?.find(u=>u.conversationId===conversation._id);
+          const unreadCount = unread?.count ?? 0;
+          return(
+            <div key={conversation._id} onClick={()=>onSelectConversation(conversation._id)}
+              className={`p-3 border rounded flex justify-between items-center cursor-pointer
+                ${selectedConversation===conversation._id?"bg-gray-800":"hover:bg-gray-400"}  
+              `}
+            >
+              {(()=>{
+                const othreParticipantId=conversation.participants.find(id=>id!==currentUserConvexId);
+                const otherUsers=users?.find(u=>u._id===othreParticipantId);
+                return (
+                  <p className="font-medium">{otherUsers?.name??"Unknown User"}</p>
+                );
+              })()}
+              
+              {unreadCount > 0 && (
+                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                  {unreadCount}
+                </span>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

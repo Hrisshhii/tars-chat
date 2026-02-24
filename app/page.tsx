@@ -61,14 +61,8 @@ export default function Home() {
             if (!currentUser) return null;
             return (
               <>
-                <Sidebar
-                  users={users}
-                  currentUserId={user?.id??""}
-                  search={search}
-                  setSearch={setSearch}
-                  onSelectUser={handleSelectUser}
-                />
-
+                <Sidebar currentUserConvexId={currentUser._id} selectedConversation={selectedConversation} onSelectConversation={setSelectedConversation}/>
+ 
                 <ChatArea selectedConversation={selectedConversation} currentUserId={currentUser._id}/>
               </>
             );

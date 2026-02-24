@@ -29,3 +29,13 @@ export const createOrUpdateConversation=mutation({
     return conversationId;
   },
 });
+
+export const getUserConversations=query({
+  args:{
+    userId:v.id("users"),
+  },
+  handler:async (ctx,args)=>{
+    const conversations=await ctx.db.query("conversations").collect();
+    return conversations.filter((c)=>c.participants.includes(args.userId));
+  },
+});
