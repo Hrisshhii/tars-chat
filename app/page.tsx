@@ -12,7 +12,6 @@ export default function Home() {
   const { user } = useUser();
   const createUser = useMutation(api.users.createOrUpdateUser);
   const users = useQuery(api.users.getUsers);
-  const createConvo = useMutation(api.conversations.createOrUpdateConversation);
   const [selectedConversation,setSelectedConversation]=useState<Id<"conversations"> | null>(null);
 
   // sync clerk user into convex database
@@ -29,20 +28,6 @@ export default function Home() {
   if (users === undefined) {
     return <div>Loading...</div>;
   }
-
-  // handles convo creation when clicked on user
-  const handleSelectUser=async (otherUserId: Id<"users">)=>{
-    if(!user) return;
-    const currentUser=users.find((u)=>u.clerkId===user.id);
-    if (!currentUser) return;
-
-    const conversationId=await createConvo({
-      user1: currentUser._id,
-      user2: otherUserId,
-    });
-
-    setSelectedConversation(conversationId);
-  };
 
   if (!users) return <div>Loading...</div>;
 
