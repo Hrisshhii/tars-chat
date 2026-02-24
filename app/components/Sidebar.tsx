@@ -5,7 +5,7 @@ import { UserButton } from "@clerk/nextjs";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface SidebarProps {
   currentUserConvexId: Id<"users">;
@@ -23,6 +23,8 @@ export function Sidebar({
   const users=useQuery(api.users.getUsers);
   const clearUnread=useMutation(api.messages.clearUnread);
 
+  const [search, setSearch] = useState("");
+
   useEffect(()=>{
     if(!selectedConversation) return;
     clearUnread({
@@ -33,11 +35,23 @@ export function Sidebar({
 
   if(!conversations) return <div>Loading...</div>;
 
+  const filteredConvos=conversations.filter((conversation)=>{
+    const otherParticipantId=conversation.participants.find(id=>id!==currentUserConvexId);
+    const otherUser=users?.find(u=>u._id===otherParticipantId);
+
+    if(!otherUser) return false;
+    return otherUser.name.toLowerCase().includes(search.toLowerCase());
+  })
+
   return (
     <div className="w-full md:w-1/3 border-r p-4 space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">Chats</h1>
-        <UserButton />
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-bold">Chats</h1>
+          <UserButton />
+        </div>
+        <input type="text" placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} className="w-full p-4 border rounded-full border-gray-500"/>
+        
       </div>
 
       <div className="space-y-2">
@@ -47,7 +61,7 @@ export function Sidebar({
           </p>
         )}
 
-        {conversations.map((conversation)=>{
+        {filteredConvos.map((conversation)=>{
           const unread=unreadCounts?.find(u=>u.conversationId===conversation._id);
           const unreadCount = unread?.count ?? 0;
           return(
@@ -58,9 +72,9 @@ export function Sidebar({
             >
               {(()=>{
                 const othreParticipantId=conversation.participants.find(id=>id!==currentUserConvexId);
-                const otherUsers=users?.find(u=>u._id===othreParticipantId);
+                const otherUser=users?.find(u=>u._id===othreParticipantId);
                 return (
-                  <p className="font-medium">{otherUsers?.name??"Unknown User"}</p>
+                  <p className="font-medium">{otherUser?.name??"Unknown User"}</p>
                 );
               })()}
               

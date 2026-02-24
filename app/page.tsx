@@ -13,8 +13,6 @@ export default function Home() {
   const createUser = useMutation(api.users.createOrUpdateUser);
   const users = useQuery(api.users.getUsers);
   const createConvo = useMutation(api.conversations.createOrUpdateConversation);
-
-  const [search,setSearch]=useState("");
   const [selectedConversation,setSelectedConversation]=useState<Id<"conversations"> | null>(null);
 
   // sync clerk user into convex database
