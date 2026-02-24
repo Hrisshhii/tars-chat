@@ -60,6 +60,7 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
       messagesEndRef.current?.scrollIntoView({behavior:"smooth"});
     }
     prevMessageCountRef.current=messages.length;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[messages]);
 
   if(!selectedConversation){

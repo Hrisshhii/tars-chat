@@ -31,6 +31,7 @@ export function Sidebar({
       conversationId:selectedConversation,
       userId:currentUserConvexId,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[selectedConversation]);
 
   if(!conversations) return <div>Loading...</div>;
