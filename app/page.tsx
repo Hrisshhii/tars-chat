@@ -15,7 +15,7 @@ export default function Home() {
   const createConvo = useMutation(api.conversations.createOrUpdateConversation);
 
   const [search,setSearch]=useState("");
-  const [selectedConversation,setSelectedConversation]=useState<string | null>(null);
+  const [selectedConversation,setSelectedConversation]=useState<Id<"conversations"> | null>(null);
 
   // sync clerk user into convex database
   useEffect(()=>{
@@ -28,10 +28,13 @@ export default function Home() {
     });
   },[user]);
 
-  if (!user || !users) return <div>Loading...</div>;
+  if (users === undefined) {
+    return <div>Loading...</div>;
+  }
 
   // handles convo creation when clicked on user
   const handleSelectUser=async (otherUserId: Id<"users">)=>{
+    if(!user) return;
     const currentUser=users.find((u)=>u.clerkId===user.id);
     if (!currentUser) return;
 
@@ -43,26 +46,33 @@ export default function Home() {
     setSelectedConversation(conversationId);
   };
 
+  if (!users) return <div>Loading...</div>;
+
   return (
     <div className="h-screen flex">
       <SignedOut>
-        <SignInButton />
+        <div className="flex items-center justify-center h-screen w-full">
+          <SignInButton />
+        </div>
       </SignedOut>
-
       <SignedIn>
-        <Sidebar
-          users={users}
-          currentUserId={user.id}
-          search={search}
-          setSearch={setSearch}
-          onSelectUser={handleSelectUser}
-        />
+        {(() => {
+            const currentUser=users.find((u)=>u.clerkId===user?.id);
+            if (!currentUser) return null;
+            return (
+              <>
+                <Sidebar
+                  users={users}
+                  currentUserId={user?.id??""}
+                  search={search}
+                  setSearch={setSearch}
+                  onSelectUser={handleSelectUser}
+                />
 
-        <ChatArea
-          selectedConversation={
-            selectedConversation
-          }
-        />
+                <ChatArea selectedConversation={selectedConversation} currentUserId={currentUser._id}/>
+              </>
+            );
+          })()}
       </SignedIn>
     </div>
   );
