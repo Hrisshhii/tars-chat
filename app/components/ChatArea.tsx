@@ -4,8 +4,9 @@
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Check, CheckCheck } from "lucide-react";
+import { Check, CheckCheck, Smile } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import EmojiPicker, { Theme } from "emoji-picker-react";
 
 interface ChatAreaProps {
   selectedConversation: Id<"conversations"> | null;
@@ -64,6 +65,12 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
   const deleteMessage = useMutation(api.messages.deleteMessage);
   const markAsSeen = useMutation(api.messages.markAsSeen);
 
+  const [showEmojiPicker,setShowEmojiPicker]=useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEmojiClick=(emojiData:any)=>{
+    setMessage((prev)=>prev+emojiData.emoji);
+  };
+
   const conversations = useQuery(
     api.conversations.getUserConversations,
     selectedConversation ? { userId: currentUserId } : "skip"
@@ -113,6 +120,8 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
     );
   }
 
+ 
+
   function handleScroll(){
     const container=scrollContainerRef.current;
     if(!container) return;
@@ -131,25 +140,23 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
         <div className="border-b p-4">
           <p className="font-semibold">{otherUser.name}</p>
           <p className="text-xs text-gray-400">
-            {isOnline ? "Online"
-              : `Last seen ${new Date(otherUser.lastSeen).toLocaleTimeString([], {
+            {isOnline ? "Online" : `Last seen ${new Date(otherUser.lastSeen).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}`}
           </p>
         </div>
       )}
-      <div className="flex flex-col flex-1 min-h-0 p-4 relative">
+      <div className="flex flex-col flex-1 min-h-0 p-4 relative overflow-visible">
         <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-2 mb-4">
           {messages?.map((msg)=>(
-            <div key={msg._id} className={`group relative p-3 rounded-xl max-w-[65%] ${msg.senderId===currentUserId?"bg-blue-500 text-white ml-auto":"bg-gray-800"}`}>
-              <div className="break-all whitespace-pre-wrap">{msg.content}</div>
+            <div key={msg._id} className={`group relative p-3 rounded-xl w-fit max-w-[52%] ${msg.senderId===currentUserId?"bg-blue-500 text-white ml-auto":"bg-gray-800"}`}>
+              <div className="break-all whitespace-pre-wrap px-1">{msg.content}</div>
               <div className="text-[0.75rem] opacity-60 mt-1 text-end flex items-center justify-end gap-1">
                 {formatTimeStamp(msg.createdAt)}
                 {msg.senderId===currentUserId && (
                   <span className={`${(msg.seenBy?.length ?? 0)>1?"text-[#04031a]":""}`}>
                     {(msg.seenBy?.length ?? 0)>1?<CheckCheck size={20}/>:<Check size={20}/>}
-                    
                   </span>
                 )}
               </div>
@@ -183,7 +190,24 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
           </button>
         )}
 
-        <div className="flex gap-2">
+        <div className="relative flex gap-2 items-center">
+          <div className="relative">
+            <button type="button"
+              onClick={()=>{
+                setShowEmojiPicker(prev=>!prev);
+              }}
+              className="text-xl px-2 cursor-pointer"
+            >
+              <Smile />
+            </button>
+
+            {showEmojiPicker && (
+              <div className="absolute bottom-16 left-0 z-999">
+                <EmojiPicker onEmojiClick={handleEmojiClick} theme={Theme.DARK}/>
+              </div>
+            )}
+          </div>
+
           <input value={message} onChange={(e)=>{
             const value=e.target.value;
               setMessage(value);
@@ -201,7 +225,7 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
                 });
               }
             }}  
-            placeholder="Type a message..." className="flex-1 p-2 border rounded"/>
+            placeholder="Type a message..." className="flex-1 px-4 py-2 bg-gray-900 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"/>
           <button onClick={async ()=>{
             if(!message.trim()) return;
             await sendMessage({
@@ -210,6 +234,7 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
               content:message,
             });
             setMessage("");
+            setShowEmojiPicker(false);
             await stopTyping({
               conversationId:selectedConversation,
               userId:currentUserId,
