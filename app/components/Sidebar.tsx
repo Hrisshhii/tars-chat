@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
@@ -52,7 +52,6 @@ export function Sidebar({
           <UserButton />
         </div>
         <input type="text" placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} className="w-full p-4 border rounded-full border-gray-500"/>
-        
       </div>
 
       <div className="space-y-2">
