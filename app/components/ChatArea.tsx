@@ -142,7 +142,7 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
       <div className="flex flex-col flex-1 min-h-0 p-4 relative">
         <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-2 mb-4">
           {messages?.map((msg)=>(
-            <div key={msg._id} className={`group relative p-3 rounded-xl max-w-xs ${msg.senderId===currentUserId?"bg-blue-500 text-white ml-auto":"bg-gray-800"}`}>
+            <div key={msg._id} className={`group relative p-3 rounded-xl max-w-[65%] ${msg.senderId===currentUserId?"bg-blue-500 text-white ml-auto":"bg-gray-800"}`}>
               <div className="break-all whitespace-pre-wrap">{msg.content}</div>
               <div className="text-[0.75rem] opacity-60 mt-1 text-end flex items-center justify-end gap-1">
                 {formatTimeStamp(msg.createdAt)}
