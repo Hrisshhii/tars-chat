@@ -134,8 +134,10 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
   useEffect(()=>{
   if(!selectedConversation || !conversations) return;
   const exists=conversations.find(c=>c._id===selectedConversation);
-  if(!exists){window.location.reload();}
-}, [conversations, selectedConversation]);
+  if(!exists){
+    window.location.reload();
+  }
+  },[conversations, selectedConversation]);
 
   if(!selectedConversation){
     return (
