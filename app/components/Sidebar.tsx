@@ -26,14 +26,6 @@ export function Sidebar({
 
   const [search, setSearch] = useState("");
 
-  useEffect(()=>{
-    if(!selectedConversation) return;
-    clearUnread({
-      conversationId:selectedConversation,
-      userId:currentUserConvexId,
-    });
-  },[selectedConversation, currentUserConvexId, clearUnread]);
-
   if(!conversations) return <div>Loading...</div>;
 
   const filteredConvos=conversations.filter((conversation)=>{
@@ -113,12 +105,12 @@ export function Sidebar({
                   )}
                 </div>
 
-                <p className="text-[0.75rem] text-gray-400 truncate w-[180px]">
+                <p className="text-[0.75rem] text-gray-400 truncate w-45">
                   {latest?.content ?? "No messages yet"}
                 </p>
               </div>
               
-              {unreadCount > 0 && (
+              {unreadCount > 0 && selectedConversation!==conversation._id && (
                 <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                   {unreadCount}
                 </span>

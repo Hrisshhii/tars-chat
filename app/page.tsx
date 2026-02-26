@@ -14,6 +14,7 @@ export default function Home() {
   const createUser = useMutation(api.users.createOrUpdateUser);
   const users = useQuery(api.users.getUsers);
   const [selectedConversation,setSelectedConversation]=useState<Id<"conversations"> | null>(null);
+  const updatePresence = useMutation(api.users.updatePresence);
 
   // sync clerk user into convex database
   useEffect(()=>{
@@ -26,6 +27,47 @@ export default function Home() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[user]);
+
+  useEffect(()=>{
+    if (!user) return;
+    let interval: NodeJS.Timeout;
+    let convexUserId: Id<"users"> | null = null;
+
+    const setupPresence=async ()=>{
+      if (!users) return;
+
+      const convexUser=users.find(u=>u.clerkId===user.id);
+      if (!convexUser) return;
+
+      convexUserId=convexUser._id;
+
+      // set online immediately
+      await updatePresence({
+        userId: convexUserId,
+        isOnline: true,
+      });
+
+      // heartbeat every 15s
+      interval = setInterval(() => {
+        updatePresence({
+          userId: convexUserId!,
+          isOnline: true,
+        });
+      }, 15000);
+    };
+    setupPresence();
+
+    return ()=>{
+      if (interval) clearInterval(interval);
+
+      if (convexUserId){
+        updatePresence({
+          userId: convexUserId,
+          isOnline: false,
+        });
+      }
+    };
+  }, [user?.id]);
 
   if (users === undefined) {
     return <div>Loading...</div>;
