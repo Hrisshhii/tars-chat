@@ -32,10 +32,38 @@ export const createOrUpdateConversation=mutation({
 
 export const getUserConversations=query({
   args:{
-    userId:v.id("users"),
+    userId: v.id("users"),
   },
-  handler:async (ctx,args)=>{
-    const conversations=await ctx.db.query("conversations").collect();
-    return conversations.filter((c)=>c.participants.includes(args.userId));
+  handler: async (ctx,args)=>{
+    const conversations=await ctx.db.query("conversations")
+      .collect();
+
+    const filtered=conversations.filter(c =>c.participants.includes(args.userId));
+
+    const enriched=await Promise.all(
+      filtered.map(async (c)=>{
+        let lastMessage=null;
+
+        if (c.lastMessageId) {
+          lastMessage=await ctx.db.get(c.lastMessageId);
+        }
+
+        if (!lastMessage) {
+          const messages=await ctx.db.query("messages").withIndex("by_conversation", q=>q.eq("conversationId", c._id)).collect();
+
+          if (messages.length>0) {
+            lastMessage=messages[messages.length-1];
+          }
+        }
+
+        return {...c,lastMessage,};
+      })
+    );
+
+    return enriched.sort((a, b) => {
+      const aTime=a.lastMessage?.createdAt ?? 0;
+      const bTime=b.lastMessage?.createdAt ?? 0;
+      return bTime-aTime;
+    });
   },
 });
