@@ -14,6 +14,7 @@ export const sendMessage=mutation({
       content:args.content,
       createdAt:Date.now(),
       deleted:false,
+      seenBy:[args.senderId],
     });
     await ctx.db.patch(args.conversationId,{
       lastMessageId:messageId,
@@ -135,6 +136,45 @@ export const stopTyping=mutation({
 
     if(existing){
       await ctx.db.delete(existing._id);
+    }
+  },
+});
+
+export const deleteMessage=mutation({
+  args: {
+    messageId: v.id("messages"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx,args)=>{
+    const message=await ctx.db.get(args.messageId);
+    if (!message) return;
+
+    if (message.senderId!==args.userId) return;
+
+    await ctx.db.delete(args.messageId);
+  },
+});
+
+export const markAsSeen=mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx,args)=>{
+    const messages=await ctx.db.query("messages").withIndex("by_conversation",(q)=>
+        q.eq("conversationId",args.conversationId)
+      ).collect();
+
+    for (const msg of messages) {
+      if (msg.senderId===args.userId) continue;
+
+      const seenBy=msg.seenBy ?? [];
+
+      if (!seenBy.includes(args.userId)) {
+        await ctx.db.patch(msg._id,{
+          seenBy: [...seenBy,args.userId],
+        });
+      }
     }
   },
 });

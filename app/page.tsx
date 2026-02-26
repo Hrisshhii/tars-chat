@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -25,7 +26,6 @@ export default function Home() {
       email: user.primaryEmailAddress?.emailAddress || "",
       imageUrl: user.imageUrl,
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[user]);
 
   useEffect(()=>{

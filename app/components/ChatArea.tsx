@@ -1,8 +1,10 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import { Check, CheckCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface ChatAreaProps {
@@ -57,8 +59,10 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
   const typingUsers=useQuery(api.messages.getTypingUsers,selectedConversation?{conversationId:selectedConversation}:"skip");
   const stopTyping=useMutation(api.messages.stopTyping);
   const clearUnread = useMutation(api.messages.clearUnread);
-  const typingTimeoutRef=useRef<NodeJS.Timeout|null>(null);
   const users=useQuery(api.users.getUsers);
+
+  const deleteMessage = useMutation(api.messages.deleteMessage);
+  const markAsSeen = useMutation(api.messages.markAsSeen);
 
   const conversations = useQuery(
     api.conversations.getUserConversations,
@@ -80,7 +84,6 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
       messagesEndRef.current?.scrollIntoView({behavior:"smooth"});
     }
     prevMessageCountRef.current=messages.length;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[messages]);
 
   useEffect(()=>{
@@ -91,6 +94,14 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
       userId: currentUserId,
     });
   }, [selectedConversation,messages]);
+
+  useEffect(()=>{
+    if(!selectedConversation || !messages) return;
+    markAsSeen({
+      conversationId:selectedConversation,
+      userId:currentUserId,
+    });
+  },[messages,selectedConversation])
 
   if(!selectedConversation){
     return (
@@ -112,7 +123,7 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
   }
 
   const showNewMessages=!isNearBottom;
-  const isOnline=otherUser && otherUser.isOnline && Date.now()-otherUser.lastSeen < 20000;
+  const isOnline=otherUser?.isOnline;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -131,9 +142,26 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
       <div className="flex flex-col flex-1 min-h-0 p-4 relative">
         <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-2 mb-4">
           {messages?.map((msg)=>(
-            <div key={msg._id} className={`p-3 rounded-xl max-w-xs ${msg.senderId===currentUserId?"bg-blue-500 text-white ml-auto":"bg-gray-800"}`}>
-              <div>{msg.content}</div>
-              <div className="text-[0.75rem] opacity-60 mt-1 text-end">{formatTimeStamp(msg.createdAt)}</div>
+            <div key={msg._id} className={`group relative p-3 rounded-xl max-w-xs ${msg.senderId===currentUserId?"bg-blue-500 text-white ml-auto":"bg-gray-800"}`}>
+              <div className="break-all whitespace-pre-wrap">{msg.content}</div>
+              <div className="text-[0.75rem] opacity-60 mt-1 text-end flex items-center justify-end gap-1">
+                {formatTimeStamp(msg.createdAt)}
+                {msg.senderId===currentUserId && (
+                  <span className={`${(msg.seenBy?.length ?? 0)>1?"text-[#04031a]":""}`}>
+                    {(msg.seenBy?.length ?? 0)>1?<CheckCheck size={20}/>:<Check size={20}/>}
+                    
+                  </span>
+                )}
+              </div>
+
+              {msg.senderId===currentUserId && (
+                <button onClick={()=>deleteMessage({
+                  messageId:msg._id,
+                  userId:currentUserId,
+                })}
+                className="absolute right-2 top-1 opacity-10 group-hover:opacity-100 text-[0.95rem] text-red-500 cursor-pointer"
+                >🗑</button>
+              )}
             </div>
           ))}
           {typingUsers && users && typingUsers.filter(t=>t.userId!==currentUserId).map(t=>{

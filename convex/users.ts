@@ -49,15 +49,21 @@ export const getUsers = query({
   },
 });
 
-export const updatePresence=mutation({
-  args:{
-    userId:v.id("users"),
+export const updatePresence = mutation({
+  args: {
+    userId: v.id("users"),
     isOnline: v.boolean(),
   },
-  handler: async (ctx,args)=>{
-    await ctx.db.patch(args.userId,{
-      isOnline: args.isOnline,
-      lastSeen:Date.now(),
-    })
+  handler: async (ctx, args) => {
+    if (args.isOnline) {
+      await ctx.db.patch(args.userId, {
+        isOnline: true,
+        lastSeen: Date.now(),
+      });
+    } else {
+      await ctx.db.patch(args.userId, {
+        isOnline: false,
+      });
+    }
   },
-})
+});

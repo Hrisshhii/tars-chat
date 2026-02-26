@@ -27,6 +27,7 @@ export default defineSchema({
     content: v.string(),
     createdAt: v.number(),
     deleted: v.optional(v.boolean()),
+    seenBy: v.optional(v.array(v.id("users"))),
   }).index("by_conversation", ["conversationId"]),
 
   typing: defineTable({

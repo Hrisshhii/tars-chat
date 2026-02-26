@@ -5,7 +5,7 @@ import { UserButton } from "@clerk/nextjs";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface SidebarProps {
   currentUserConvexId: Id<"users">;
