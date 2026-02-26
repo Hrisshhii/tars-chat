@@ -132,7 +132,7 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
   }
 
   const showNewMessages=!isNearBottom;
-  const isOnline=otherUser?.isOnline;
+  const isOnline=otherUser && otherUser.isOnline && Date.now()-otherUser.lastSeen < 20000;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">

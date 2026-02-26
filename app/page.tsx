@@ -28,46 +28,43 @@ export default function Home() {
     });
   },[user]);
 
+  const convexUserId = users?.find(u => u.clerkId === user?.id)?._id;
+
   useEffect(()=>{
-    if (!user) return;
+    if (!convexUserId) return;
+
     let interval: NodeJS.Timeout;
-    let convexUserId: Id<"users"> | null = null;
 
-    const setupPresence=async ()=>{
-      if (!users) return;
-
-      const convexUser=users.find(u=>u.clerkId===user.id);
-      if (!convexUser) return;
-
-      convexUserId=convexUser._id;
-
-      // set online immediately
+    const startPresence=async ()=>{
       await updatePresence({
         userId: convexUserId,
         isOnline: true,
       });
 
-      // heartbeat every 15s
-      interval = setInterval(() => {
-        updatePresence({
-          userId: convexUserId!,
-          isOnline: true,
-        });
-      }, 15000);
-    };
-    setupPresence();
-
-    return ()=>{
-      if (interval) clearInterval(interval);
-
-      if (convexUserId){
+      interval=setInterval(()=>{
         updatePresence({
           userId: convexUserId,
-          isOnline: false,
+          isOnline: true,
         });
-      }
+      }, 10000);
     };
-  }, [user?.id]);
+
+    startPresence();
+
+    const handleBeforeUnload=()=>{
+      updatePresence({
+        userId: convexUserId,
+        isOnline: false,
+      });
+    };
+
+    window.addEventListener("beforeunload",handleBeforeUnload);
+
+    return ()=>{
+      clearInterval(interval);
+      window.removeEventListener("beforeunload",handleBeforeUnload);
+    };
+  },[convexUserId]);
 
   if (users === undefined) {
     return <div>Loading...</div>;
