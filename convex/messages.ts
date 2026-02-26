@@ -85,3 +85,56 @@ export const getUnreadCounts = query({
       ).collect();
   },
 });
+
+export const setTyping=mutation({
+  args:{
+    conversationId:v.id("conversations"),
+    userId:v.id("users"),
+  },
+  handler: async (ctx,args)=>{
+    const existing=await ctx.db.query("typing").filter(q=>q.and(
+      q.eq(q.field("conversationId"),args.conversationId),
+      q.eq(q.field("userId"),args.userId)
+    )).unique();
+
+    if(existing){
+      await ctx.db.patch(existing._id,{
+        updatedAt: Date.now(),
+      });
+    }else{
+      await ctx.db.insert("typing",{
+        conversationId:args.conversationId,
+        userId:args.userId,
+        updatedAt:Date.now(),
+      });
+    }
+  },
+});
+
+export const getTypingUsers=query({
+  args:{
+    conversationId:v.id("conversations"),
+  },
+  handler: async (ctx,args)=>{
+    const now=Date.now();
+    const typingUsers=await ctx.db.query("typing").filter(q=>q.eq(q.field("conversationId"),args.conversationId)).collect();
+    return typingUsers.filter(t=>now-t.updatedAt<3000);
+  },
+})
+
+export const stopTyping=mutation({
+  args:{
+    conversationId:v.id("conversations"),
+    userId:v.id("users"),
+  },
+  handler:async (ctx,args)=>{
+    const existing=await ctx.db.query("typing").filter(q=>q.and(
+      q.eq(q.field("conversationId"),args.conversationId),
+      q.eq(q.field("userId"),args.userId)
+    )).unique()
+
+    if(existing){
+      await ctx.db.delete(existing._id);
+    }
+  },
+});

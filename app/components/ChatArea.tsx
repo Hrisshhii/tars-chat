@@ -53,6 +53,11 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
 
   const [isNearBottom,setIsNearBottom]=useState(true);
 
+  const setTyping=useMutation(api.messages.setTyping);
+  const typingUsers=useQuery(api.messages.getTypingUsers,selectedConversation?{conversationId:selectedConversation}:"skip");
+  const stopTyping=useMutation(api.messages.stopTyping);
+  const typingTimeoutRef=useRef<NodeJS.Timeout|null>(null);
+
   useEffect(()=>{
     if(!messages) return;
     const isNewMessage=messages.length>prevMessageCountRef.current;
@@ -94,7 +99,11 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
           </div>
         ))}
         <div ref={messagesEndRef}/>
+        {typingUsers && typingUsers.filter(t=>t.userId!==currentUserId).map(t=>(
+          <div key={t._id} className="text-sm text-gray-400 italic mb-2">Typing...</div>
+        ))}
       </div>
+
       {showNewMessages && (
         <button onClick={()=>{
             messagesEndRef.current?.scrollIntoView({behavior:"smooth"});
@@ -103,8 +112,35 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
           ↓ New Messages
         </button>
       )}
+
       <div className="flex gap-2">
-        <input value={message} onChange={(e)=>setMessage(e.target.value)} placeholder="Type a message..." className="flex-1 p-2 border rounded"/>
+        <input value={message} onChange={(e)=>{
+          const value=e.target.value;
+            setMessage(value);
+            if(!selectedConversation) return;
+
+            if(value.trim().length>0){
+              setTyping({
+                conversationId: selectedConversation,
+                userId:currentUserId,
+              });
+              if(typingTimeoutRef.current){
+                clearTimeout(typingTimeoutRef.current);
+              }
+              typingTimeoutRef.current=setTimeout(()=>{
+                stopTyping({
+                  conversationId:selectedConversation,
+                  userId:currentUserId,
+                });
+              },5000);
+            }else{
+              stopTyping({
+                conversationId:selectedConversation,
+                userId:currentUserId,
+              });
+            }
+          }}  
+          placeholder="Type a message..." className="flex-1 p-2 border rounded"/>
         <button onClick={async ()=>{
           if(!message.trim()) return;
           await sendMessage({
@@ -113,6 +149,10 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
             content:message,
           });
           setMessage("");
+          await stopTyping({
+            conversationId:selectedConversation,
+            userId:currentUserId,
+          });
         }} className="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer">Send</button>
       </div>
     </div>
