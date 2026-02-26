@@ -62,6 +62,8 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
   const clearUnread = useMutation(api.messages.clearUnread);
   const users=useQuery(api.users.getUsers);
 
+  const deleteGroupConversation=useMutation(api.conversations.deleteGroupConversation);
+
   const deleteMessage = useMutation(api.messages.deleteMessage);
   const markAsSeen = useMutation(api.messages.markAsSeen);
 
@@ -76,12 +78,31 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
     selectedConversation ? { userId: currentUserId } : "skip"
   );
 
-  let otherUser = null;
+  const currentConversation=conversations?.find(c => c._id === selectedConversation);
 
-  if (conversations && selectedConversation && users) {
-    const current = conversations.find(c => c._id === selectedConversation);
-    const otherId = current?.participants.find(id => id !== currentUserId);
-    otherUser = users.find(u => u._id === otherId);
+  let headerTitle="";
+  let headerSubtitle="";
+  let isGroup=false;
+  let isOnline=false;
+
+  if (currentConversation && users){
+    if (currentConversation.isGroup){
+      isGroup=true;
+      headerTitle=currentConversation.name ?? "Group Chat";
+      const memberNames=users.filter(u => currentConversation.participants.includes(u._id)).map(u => u.name);
+      headerSubtitle=memberNames.join(", ");
+    }else{
+      const otherId=currentConversation.participants.find(
+        id=>id !== currentUserId
+      );
+      const otherUser=users.find(u=>u._id===otherId);
+      isOnline=!!otherUser?.isOnline && Date.now()-(otherUser?.lastSeen ?? 0)<20000;
+      headerTitle=otherUser?.name ?? "";
+      headerSubtitle=isOnline?"Online":`Last seen ${new Date(otherUser?.lastSeen ?? 0).toLocaleTimeString([],{
+            hour: "2-digit",
+            minute: "2-digit",
+          })}`;
+    }
   }
 
   useEffect(()=>{
@@ -132,26 +153,41 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
   }
 
   const showNewMessages=!isNearBottom;
-  const isOnline=otherUser && otherUser.isOnline && Date.now()-otherUser.lastSeen < 20000;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {otherUser && (
-        <div className="border-b p-4">
-          <p className="font-semibold">{otherUser.name}</p>
-          <p className="text-xs text-gray-400">
-            {isOnline ? "Online" : `Last seen ${new Date(otherUser.lastSeen).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}`}
+      <div className="border-b p-4 flex justify-between items-center">
+        <div>
+          <p className="font-semibold">{headerTitle}</p>
+          <p className={`text-xs truncate max-w-100 ${isGroup?"text-gray-400":isOnline?"text-[#a3f8af]":"text-[#f8a6a3]"}`}>
+            {headerSubtitle}
           </p>
         </div>
-      )}
+
+        {isGroup && currentConversation?.participants[0] === currentUserId && (
+          <button
+            onClick={async () => {
+              await deleteGroupConversation({
+                conversationId: selectedConversation!,
+                userId: currentUserId,
+              });
+            }}
+            className="text-red-500/50 rounded p-2 border border-red-500/50 text-sm hover:text-red-300 hover:border-red-300 cursor-pointer"
+          >
+            Delete Group
+          </button>
+        )}
+      </div>
       <div className="flex flex-col flex-1 min-h-0 p-4 relative overflow-visible">
         <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-2 mb-4">
           {messages?.map((msg)=>(
             <div key={msg._id} className={`group relative p-3 rounded-xl w-fit max-w-[52%] ${msg.senderId===currentUserId?"bg-blue-500 text-white ml-auto":"bg-gray-800"}`}>
-              <div className="break-all whitespace-pre-wrap px-1">{msg.content}</div>
+              <div className="break-all whitespace-pre-wrap px-1">
+                {isGroup  && msg.senderId!==currentUserId && (
+                  <p className="text-xs font-semibold text-blue-300 mb-1">{users?.find(u=>u._id===msg.senderId)?.name}</p>
+                )}
+                {msg.content}
+              </div>
               <div className="text-[0.75rem] opacity-60 mt-1 text-end flex items-center justify-end gap-1">
                 {formatTimeStamp(msg.createdAt)}
                 {msg.senderId===currentUserId && (

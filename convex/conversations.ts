@@ -67,3 +67,49 @@ export const getUserConversations=query({
     });
   },
 });
+
+export const createGroupConversation = mutation({
+  args: {
+    creatorId: v.id("users"),
+    participantIds: v.array(v.id("users")),
+    name: v.string(),
+  },
+  handler: async (ctx,args)=>{
+    const uniqueParticipants=Array.from(
+      new Set([args.creatorId,...args.participantIds])
+    );
+
+    const conversationId=await ctx.db.insert("conversations",{
+      participants: uniqueParticipants,
+      isGroup: true,
+      name: args.name,
+    });
+
+    return conversationId;
+  },
+});
+
+export const deleteGroupConversation=mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx,args)=>{
+    const conversation=await ctx.db.get(args.conversationId);
+    if (!conversation) return;
+
+    if (!conversation.isGroup) return;
+
+    if (conversation.participants[0]!==args.userId) return;
+
+    const messages=await ctx.db.query("messages").withIndex("by_conversation", q =>
+        q.eq("conversationId", args.conversationId)
+      ).collect();
+
+    for (const msg of messages) {
+      await ctx.db.delete(msg._id);
+    }
+
+    await ctx.db.delete(args.conversationId);
+  },
+});
