@@ -57,6 +57,7 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
   const typingUsers=useQuery(api.messages.getTypingUsers,selectedConversation?{conversationId:selectedConversation}:"skip");
   const stopTyping=useMutation(api.messages.stopTyping);
   const typingTimeoutRef=useRef<NodeJS.Timeout|null>(null);
+  const users=useQuery(api.users.getUsers);
 
   useEffect(()=>{
     if(!messages) return;
@@ -98,10 +99,14 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
             <div className="text-[0.75rem] opacity-60 mt-1 text-end">{formatTimeStamp(msg.createdAt)}</div>
           </div>
         ))}
+        {typingUsers && users && typingUsers.filter(t=>t.userId!==currentUserId).map(t=>{
+          const user=users.find(u=>u._id===t.userId);
+          return(
+            <div ref={scrollContainerRef} key={t._id} className="text-sm text-gray-400 italic mb-2">{user?.name || "Unknown user"} is typing...</div>
+          )
+        })}
         <div ref={messagesEndRef}/>
-        {typingUsers && typingUsers.filter(t=>t.userId!==currentUserId).map(t=>(
-          <div key={t._id} className="text-sm text-gray-400 italic mb-2">Typing...</div>
-        ))}
+        
       </div>
 
       {showNewMessages && (

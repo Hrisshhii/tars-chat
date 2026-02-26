@@ -48,3 +48,16 @@ export const getUsers = query({
     return await ctx.db.query("users").collect();
   },
 });
+
+export const updatePresence=mutation({
+  args:{
+    userId:v.id("users"),
+    isOnline: v.boolean(),
+  },
+  handler: async (ctx,args)=>{
+    await ctx.db.patch(args.userId,{
+      isOnline: args.isOnline,
+      lastSeen:Date.now(),
+    })
+  },
+})
