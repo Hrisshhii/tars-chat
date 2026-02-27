@@ -9,6 +9,7 @@ import { Sidebar } from "./components/Sidebar";
 import { ChatArea } from "./components/ChatArea";
 import { Id } from "@/convex/_generated/dataModel";
 import { SignIn } from "@clerk/nextjs";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const { user } = useUser();
@@ -73,7 +74,7 @@ export default function Home() {
   if (!users) return <div>Loading...</div>;
 
   return (
-    <div className="h-screen bg-black">
+    <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.4}} className="h-screen bg-linear-to-br from-[#0f0f14] via-[#12121a] to-black">
       <SignedOut>
         <div className="flex items-center justify-center h-full">
           <SignIn routing="hash" />
@@ -93,6 +94,6 @@ export default function Home() {
           })()}
         </div>
       </SignedIn>
-    </div>
+    </motion.div>
   );
 }

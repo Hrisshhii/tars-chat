@@ -7,6 +7,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Check, CheckCheck, Smile } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import EmojiPicker, { Theme } from "emoji-picker-react";
+import { motion } from "framer-motion";
 
 interface ChatAreaProps {
   selectedConversation: Id<"conversations"> | null;
@@ -163,13 +164,15 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
   const showNewMessages=!isNearBottom;
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
-      <div className="border-b p-4 flex justify-between items-center">
+    <div className="flex flex-col flex-1 min-h-0 relative overflow-hidden">
+      <div className="p-4 flex justify-between items-center border-b border-white/10 bg-black/5 backdrop-blur-md">
         <div>
           <p className="font-semibold">{headerTitle}</p>
-          <p className={`text-xs truncate max-w-100 ${isGroup?"text-gray-400":isOnline?"text-[#a3f8af]":"text-[#f8a6a3]"}`}>
-            {headerSubtitle}
-          </p>
+          <div className="flex gap-2">
+            <p className={`text-xs truncate max-w-100 ${isGroup?"text-gray-400":isOnline?"text-emerald-200 animate-pulse":"text-rose-200"}`}>
+              {headerSubtitle}
+            </p>
+          </div>
         </div>
 
         {isGroup && currentConversation?.participants[0] === currentUserId && (
@@ -189,31 +192,35 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
       <div className="flex flex-col flex-1 min-h-0 p-4 relative overflow-visible">
         <div ref={scrollContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-2 mb-4">
           {messages?.map((msg)=>(
-            <div key={msg._id} className={`group relative p-3 rounded-xl w-fit max-w-[52%] ${msg.senderId===currentUserId?"bg-blue-500 text-white ml-auto":"bg-gray-800"}`}>
+            <motion.div initial={{opacity:0,x:50}} animate={{opacity:1,x:0}} transition={{duration:0.2}}
+              key={msg._id} className={`group relative p-3 rounded-xl w-fit max-w-[52%] hover:scale-[1.01] transition-transform duration-200
+              ${msg.senderId===currentUserId?"bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20 ml-auto"
+                :"bg-white/10 backdrop-blur-md border border-white/10 text-white"}`}>
               <div className="break-all whitespace-pre-wrap px-1">
                 {isGroup  && msg.senderId!==currentUserId && (
                   <p className="text-xs font-semibold text-blue-300 mb-1">{users?.find(u=>u._id===msg.senderId)?.name}</p>
                 )}
                 {msg.content}
               </div>
-              <div className="text-[0.75rem] opacity-60 mt-1 text-end flex items-center justify-end gap-1">
+              <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.2}}
+                className="text-[0.75rem] opacity-60 mt-1 text-end flex items-center justify-end gap-1">
                 {formatTimeStamp(msg.createdAt)}
                 {msg.senderId===currentUserId && (
                   <span className={`${(msg.seenBy?.length ?? 0)>1?"text-[#04031a]":""}`}>
                     {(msg.seenBy?.length ?? 0)>1?<CheckCheck size={20}/>:<Check size={20}/>}
                   </span>
                 )}
-              </div>
+              </motion.div>
 
               {msg.senderId===currentUserId && (
                 <button onClick={()=>deleteMessage({
                   messageId:msg._id,
                   userId:currentUserId,
                 })}
-                className="absolute right-2 top-1 opacity-10 group-hover:opacity-100 text-[0.95rem] text-red-500 cursor-pointer"
+                className="absolute right-2 top-1 opacity-10 group-hover:opacity-100 text-[0.95rem] text-red-200 cursor-pointer"
                 >🗑</button>
               )}
-            </div>
+            </motion.div>
           ))}
           {typingUsers && users && typingUsers.filter(t=>t.userId!==currentUserId).map(t=>{
             const user=users.find(u=>u._id===t.userId);
@@ -240,7 +247,7 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
               onClick={()=>{
                 setShowEmojiPicker(prev=>!prev);
               }}
-              className="text-xl px-2 cursor-pointer"
+              className="text-xl px-2 cursor-pointer text-gray-400 hover:text-blue-400 transition"
             >
               <Smile />
             </button>
@@ -252,24 +259,42 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
             )}
           </div>
 
-          <input value={message} onChange={(e)=>{
-            const value=e.target.value;
-              setMessage(value);
-              if(!selectedConversation) return;
-
-              if(value.trim().length>0){
-                setTyping({
+          <input value={message} 
+            onKeyDown={(e)=>{
+              if(e.key==="Enter" && !e.shiftKey){
+                e.preventDefault();
+                if(!message.trim()) return;
+                sendMessage({
                   conversationId: selectedConversation,
-                  userId:currentUserId,
+                  senderId: currentUserId,
+                  content: message,
                 });
-              }else{
+                setMessage("");
+                setShowEmojiPicker(false);
                 stopTyping({
-                  conversationId:selectedConversation,
-                  userId:currentUserId,
+                  conversationId: selectedConversation,
+                  userId: currentUserId,
                 });
               }
-            }}  
-            placeholder="Type a message..." className="flex-1 px-4 py-2 bg-gray-900 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            }}
+            onChange={(e)=>{
+              const value=e.target.value;
+                setMessage(value);
+                if(!selectedConversation) return;
+
+                if(value.trim().length>0){
+                  setTyping({
+                    conversationId: selectedConversation,
+                    userId:currentUserId,
+                  });
+                }else{
+                  stopTyping({
+                    conversationId:selectedConversation,
+                    userId:currentUserId,
+                  });
+                }
+              }}  
+            placeholder="Type a message..." className="flex-1 px-4 py-2 bg-transparent text-white border border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"/>
           <button onClick={async ()=>{
             if(!message.trim()) return;
             await sendMessage({
@@ -283,7 +308,7 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
               conversationId:selectedConversation,
               userId:currentUserId,
             });
-          }} className="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer">Send</button>
+          }} className="bg-linear-to-r from-blue-600 to-blue-500 px-5 py-2 rounded-full hover:scale-105 transition-all duration-200 shadow-md shadow-blue-500/30 cursor-pointer">Send</button>
         </div>
     </div>
   </div>

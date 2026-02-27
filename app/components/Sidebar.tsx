@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 
 "use client";
 
@@ -48,16 +49,16 @@ export function Sidebar({
   });
 
   return (
-    <div className="w-full md:w-1/3 border-r p-4 space-y-4">
+    <div className="w-full md:w-1/3 p-6 backdrop-blur-xl border-r space-y-4 border-white/10">
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold">Chats</h1>
+          <h1 className="text-2xl font-bold bg-linear-to-r from-blue-400 via-indigo-300 to-cyan-200 bg-clip-text text-transparent">Chats</h1>
           <UserButton />
         </div>
         <div className="flex gap-2">
-          <input type="text" placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} className="w-full p-4 border rounded-full border-gray-500"/>
+          <input type="text" placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} className="w-full p-4 px-4 py-3 bg-white/5 border border-white/10 rounded-full"/>
           <button onClick={()=>setShowGroupModal(true)}>
-            <PlusCircle size={40} className="bg-blue-400 rounded-full text-black cursor-pointer hover:scale-110"/>
+            <PlusCircle size={40} className="bg-blue-400 rounded-full text-black cursor-pointer hover:scale-110 hover:bg-blue-300 transition-all"/>
           </button>
         </div>
       </div>
@@ -70,18 +71,18 @@ export function Sidebar({
             </p>
 
             {users.filter(u => u._id !== currentUserConvexId).map(u => (
-                <div key={u._id}
-                  onClick={async () => {
-                    const convoId = await createConversation({
-                      user1: currentUserConvexId,
-                      user2: u._id,
-                    });
-                    onSelectConversation(convoId);
-                  }}
-                  className="p-3 border rounded cursor-pointer hover:bg-gray-700"
-                >
-                  {u.name}
-                </div>
+              <div key={u._id}
+                onClick={async () => {
+                  const convoId = await createConversation({
+                    user1: currentUserConvexId,
+                    user2: u._id,
+                  });
+                  onSelectConversation(convoId);
+                }}
+                className="p-3  border border-white/10 rounded cursor-pointer hover:bg-gray-700"
+              >
+                {u.name}
+              </div>
               ))}
           </>
         )}
@@ -101,30 +102,42 @@ export function Sidebar({
                   userId:currentUserConvexId,
                 });
               }}
-              className={`p-3 border rounded flex justify-between items-center cursor-pointer
+              className={`py-4 px-0 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 transition-all duration-200 cursor-pointer
                 ${selectedConversation===conversation._id?"bg-gray-800":"hover:bg-gray-400"}  
               `}
             >
-              <div className="flex flex-col">
-                <div className="flex justify-between items-center">
-                  <p className="font-semibold">{conversation.isGroup?conversation.name ?? "Group Chat":otherUser?.name ?? "Unknown User"}</p>
-                  {latest && (
-                    <span className="text-xs text-gray-400">
-                      {latest ? new Date(latest.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                        }):""}
-                    </span>
-                  )}
+              <div className="flex items-start gap-4">
+                <div className="relative shrink-0 pt-1 pl-2">
+                  <img
+                    src={otherUser?.imageUrl}
+                    alt="avatar"
+                    className="w-10 rounded-full object-cover"
+                  />
                 </div>
 
-                <p className="text-[0.75rem] text-gray-400 truncate w-45">
-                  {latest?.content ?? "No messages yet"}
-                </p>
+                <div className="flex-1 min-w-0 leading-tight">
+                  <div className="flex justify-between items-center gap-2">
+                    <p className="font-semibold text-white text-[0.95rem] truncate max-w-[75%]">
+                      {conversation.isGroup ? conversation.name ?? "Group Chat" : otherUser?.name ?? "Unknown User"}
+                    </p>
+
+                    {latest && (
+                      <span className="text-[0.7rem] p-2 text-white/40 whitespace-nowrap shrink-0 pl-1">
+                        {new Date(latest.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[0.8rem] text-white/50 truncate">
+                    {latest?.content ?? "No messages yet"}
+                  </p>
+                </div>
               </div>
               
               {unreadCount > 0 && selectedConversation!==conversation._id && (
-                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                <span className="bg-linear-to-r from-rose-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-md">
                   {unreadCount}
                 </span>
               )}
