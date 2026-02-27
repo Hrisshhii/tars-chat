@@ -78,10 +78,19 @@ export default function Home() {
   },[convexUserId]);
 
   if (users === undefined) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen text-white">
+        <div className="animate-pulse text-lg">Loading Tars Chat...</div>
+      </div>
+    );
   }
 
-  if (!users) return <div>Loading...</div>;
+  if (!users) 
+    return (
+      <div className="flex items-center justify-center h-screen text-white">
+        <div className="animate-pulse text-lg">Loading Tars Chat...</div>
+      </div>
+    );
 
   return (
     <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{duration:0.4}} className="h-screen bg-linear-to-br from-[#0f0f14] via-[#12121a] to-black">
