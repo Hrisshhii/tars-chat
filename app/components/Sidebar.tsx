@@ -135,13 +135,12 @@ export function Sidebar({
                     {latest?.content ?? "No messages yet"}
                   </p>
                 </div>
+                {unreadCount > 0 && selectedConversation!==conversation._id && (
+                  <span className="bg-linear-to-r from-rose-500 to-pink-500 text-white text-xs px-2 m-2 py-1 rounded-full shadow-md">
+                    {unreadCount}
+                  </span>
+                )}
               </div>
-              
-              {unreadCount > 0 && selectedConversation!==conversation._id && (
-                <span className="bg-linear-to-r from-rose-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full shadow-md">
-                  {unreadCount}
-                </span>
-              )}
             </div>
           );
         })}
