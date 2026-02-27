@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState } from "react";
 import { PlusCircle } from "lucide-react";
+import {motion} from "framer-motion";
 
 interface SidebarProps {
   currentUserConvexId: Id<"users">;
@@ -147,55 +148,64 @@ export function Sidebar({
       </div>
 
       {showGroupModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 p-6 rounded-xl w-96 space-y-4">
-            <h2 className="text-lg font-semibold">Create Group</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          
+          <motion.div initial={{opacity: 0,scale: 0.9,y: 20}} animate={{opacity:1, scale: 1,y: 0}} exit={{opacity: 0}} transition={{duration: 0.2}}
+            className="w-105 max-w-[95%] p-6 rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-black/40">
+            
+            <h2 className="text-xl font-semibold text-white mb-4">Create Group</h2>
 
-            <input placeholder="Group name" value={groupName} onChange={(e)=>setGroupName(e.target.value)}
-              className="w-full p-2 rounded bg-zinc-800 border border-zinc-700"
-            />
+            <input placeholder="Group name..." value={groupName} onChange={(e) => setGroupName(e.target.value)}
+              className="w-full px-4 py-3 mb-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/40 
+                focus:outline-none focus:ring-2 focus:ring-blue-500transition"/>
 
-            <div className="max-h-40 overflow-y-auto space-y-2">
-              {users?.filter(u=>u._id !== currentUserConvexId).map(u=>{
-                const isSelected = selectedUsers.includes(u._id);
+            <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+              {users ?.filter((u)=>u._id !== currentUserConvexId).map((u)=>{
+                  const isSelected=selectedUsers.includes(u._id);
                   return (
-                    <div key={u._id}
-                      onClick={()=>{
-                        setSelectedUsers(prev=>isSelected? prev.filter(id=>id !== u._id):[...prev, u._id]);
-                      }}
-                      className={`p-2 rounded cursor-pointer ${isSelected ? "bg-blue-500" : "bg-zinc-800"}`}
+                    <div key={u._id} onClick={()=>setSelectedUsers((prev)=>isSelected ? prev.filter((id) => id !== u._id) : [...prev, u._id])}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-200
+                        ${isSelected ? "bg-linear-to-r from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/30"
+                            : "bg-white/4 hover:bg-white/8 text-white/80"
+                        }`}
                     >
-                      {u.name}
+                      <span className="truncate">{u.name}</span>
+
+                      {isSelected && (
+                        <span className="text-sm font-semibold">✓</span>
+                      )}
                     </div>
                   );
                 })}
             </div>
 
-            <div className="flex justify-end gap-2">
-              <button onClick={()=>setShowGroupModal(false)} className="px-3 py-1 bg-zinc-700 rounded cursor-pointer">
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={()=>setShowGroupModal(false)}
+                className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 transition">
                 Cancel
               </button>
 
               <button
-                onClick={async ()=>{
-                  if (!groupName.trim() || selectedUsers.length===0) return;
-
+                onClick={async()=>{
+                  if(!groupName.trim()||selectedUsers.length===0) return;
                   const convoId=await createGroupConversation({
                     creatorId: currentUserConvexId,
                     participantIds: selectedUsers,
                     name: groupName,
                   });
+
                   setShowGroupModal(false);
                   setGroupName("");
                   setSelectedUsers([]);
                   onSelectConversation(convoId);
                 }}
-                className="px-3 py-1 bg-blue-500 rounded cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-linear-to-r from-blue-600 to-blue-500 hover:scale-105 transition-all duration-200 shadow-lg 
+                  shadow-blue-500/30 text-white font-medium"
               >
                 Create
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>
