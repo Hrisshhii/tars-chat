@@ -132,14 +132,6 @@ export function ChatArea({selectedConversation,currentUserId}:ChatAreaProps){
     });
   },[messages,selectedConversation])
 
-  useEffect(()=>{
-  if(!selectedConversation || !conversations) return;
-  const exists=conversations.find(c=>c._id===selectedConversation);
-  if(!exists){
-    window.location.reload();
-  }
-  },[conversations, selectedConversation]);
-
   if(!selectedConversation){
     return (
       <div className="hidden md:flex flex-1 items-center justify-center">

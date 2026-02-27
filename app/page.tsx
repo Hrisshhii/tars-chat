@@ -31,6 +31,16 @@ export default function Home() {
 
   const convexUserId = users?.find(u => u.clerkId === user?.id)?._id;
 
+  const conversations=useQuery(api.conversations.getUserConversations,convexUserId?{userId: convexUserId}:"skip");
+
+  useEffect(()=>{
+    if (!selectedConversation || !conversations) return;
+    const exists=conversations.some((c)=>c._id===selectedConversation);
+    if (!exists){
+      setSelectedConversation(null);
+    }
+  },[conversations,selectedConversation]);
+
   useEffect(()=>{
     if (!convexUserId) return;
 
